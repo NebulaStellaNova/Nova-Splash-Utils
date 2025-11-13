@@ -1,0 +1,153 @@
+import funkin.ui.MusicBeatState;
+import funkin.ui.title.TitleState;
+
+import openfl.display.Graphics;
+import openfl.display.Sprite;
+import openfl.text.TextField;
+import openfl.text.TextFormat;
+import flixel.FlxG;
+import flixel.FlxState;
+import flixel.tweens.FlxEase;
+import flixel.tweens.FlxTween;
+import flixel.util.FlxColor;
+import flixel.util.FlxTimer;
+import funkin.util.FileUtil;
+import flixel.system.FlxAssets;
+
+import haxe.Json;
+import funkin.modding.PolymodHandler;
+import funkin.graphics.FunkinSprite;
+import flixel.tweens.FlxTween;
+import flixel.tweens.FlxEase;
+
+import flixel.util.FlxColor;
+import flixel.util.FlxTimer;
+import funkin.audio.FunkinSound;
+
+import Reflect;
+import StringTools;
+using StringTools;
+
+class SplashManagerState extends MusicBeatState {
+
+	var splashObjects = Map.new();
+	var splashDatas = [];
+	var skipNovaSplash = false;
+	var splashTimers = [];
+	var splashTimerIndex = -1;
+
+	var defaultAnimations = [
+		{
+			type: "tween",
+			properties: {
+				alpha: 1
+			},
+			duration: 1
+		},
+		{
+			type: "pause",
+			duration: 2
+		},
+		{
+			type: "tween",
+			properties: {
+				alpha: 0
+			},
+			duration: 1
+		}
+	];
+
+    public function new() {
+        super('SplashManagerState');
+    }
+    
+    public function create() {
+        super.create();
+
+		trace("\n\n\n\n\nSearching for splash jsons");
+		for (i in PolymodHandler.getAllMods()) {
+            // i.id;
+			var hasJson = false;
+			for (suffix in ["", "c"]) {
+				trace(PolymodHandler.MOD_FOLDER + "/" + i.id + "/data/splashscreen.json" + suffix);
+				if (FileUtil.fileExists(PolymodHandler.MOD_FOLDER + "/" + i.id + "/data/splashscreen.json" + suffix)) {
+					hasJson = true;
+					splashDatas.push(Json.parse(JsonUtils.removeJsonComments(FileUtil.readStringFromPath(PolymodHandler.MOD_FOLDER + "/" + i.id + "/data/splashscreen.json" + suffix))));
+				}
+			}
+			if (hasJson)
+				trace("foundJson:D");
+        }
+		trace(splashDatas + "\n\n\n\n\n");
+
+		for (splash in splashDatas) {
+			if (splash.skipNovaSplash)
+				skipNovaSplash = true;
+		}
+		for (splash in splashDatas) {
+			for (theSplash in splash.splashes) {
+				if (theSplash.assetPath == "novaProjects" && skipNovaSplash) continue;
+				var splashAsset = new FunkinSprite().loadGraphic(Paths.image((!theSplash.assetPath.startsWith("root:") ? "splashscreen/" : "") + theSplash.assetPath.replace("root:", "")));
+				splashAsset.antialiasing = !theSplash.isPixel;
+				splashAsset.alpha = theSplash.startAlpha ?? 0;
+				splashAsset.scale.set(theSplash.scale, theSplash.scale);
+				splashAsset.screenCenter();
+				splashAsset.x = theSplash.startPosition[0] == "center" ? splashAsset.x : theSplash.startPosition[0];
+				splashAsset.y = theSplash.startPosition[1] == "center" ? splashAsset.y : theSplash.startPosition[1];
+
+				splashTimers.push(()->{
+					add(splashAsset);
+					nextSplashTimer();
+				});
+				if (theSplash.animations == "default" || theSplash.animations == "SplashManager.defaultAnimation") {
+					theSplash.animations = defaultAnimations;
+				}
+				for (animation in theSplash.animations) {
+					switch (animation.type.toLowerCase()) {
+						case "pause":
+							splashTimers.push(()->{
+								if (animation?.soundAssets?.onStart != null) 
+									FunkinSound.playOnce(Paths.sound(animation.soundAssets.onStart));
+								new FlxTimer().start(animation.duration, ()->{
+									if (animation?.soundAssets?.onComplete != null) 
+										FunkinSound.playOnce(Paths.sound(animation.soundAssets.onComplete));
+									nextSplashTimer();
+								});
+							});
+						case "tween":
+							splashTimers.push(()->{
+								if (animation?.soundAssets?.onStart != null) 
+									FunkinSound.playOnce(Paths.sound(animation.soundAssets.onStart));
+								FlxTween.tween(splashAsset, animation.properties, animation.duration, {
+									onComplete: ()->{
+										if (animation?.soundAssets?.onComplete != null) 
+											FunkinSound.playOnce(Paths.sound(animation.soundAssets.onComplete));
+										nextSplashTimer();
+									},
+									ease: Reflect.getProperty(FlxEase, animation?.ease ?? "linear")
+								});
+							});
+					}
+				}
+			}
+			splashTimers.push(()->new FlxTimer().start(1, ()->nextSplashTimer()));
+		}
+		new FlxTimer().start(1, ()->nextSplashTimer());
+    }
+
+	function nextSplashTimer() {
+		splashTimerIndex++;
+		if (splashTimerIndex < splashTimers.length)
+			splashTimers[splashTimerIndex]();
+		else new FlxTimer().start(1, ()->onFinish());
+	}
+
+    function update() {
+        super.update();
+    }
+
+	function onFinish() {
+		SplashStateManager.firstOpen = false;
+		FlxG.switchState(() -> new TitleState());
+	}
+}

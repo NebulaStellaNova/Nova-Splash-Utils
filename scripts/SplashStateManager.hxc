@@ -1,0 +1,27 @@
+import flixel.FlxG;
+import funkin.save.Save;
+import funkin.util.ReflectUtil;
+import funkin.ui.title.TitleState;
+import funkin.modding.module.Module;
+import funkin.modding.base.ScriptedMusicBeatState;
+import funkin.modding.base.ScriptedMusicBeatSubState;
+
+class SplashStateManager extends Module {
+	
+	public static var firstOpen = true;
+
+	function new(){
+		super("SplashStateManager");
+	}
+
+	public function onStateChangeEnd(event) {
+		super.onStateChangeEnd(event);
+		
+		if (Std.isOfType(FlxG.state, TitleState) && SplashStateManager.firstOpen) {
+			// StateManager.firstOpen = false;
+			FlxG.switchState(() -> new SplashManagerState());
+		}
+
+	}
+
+}

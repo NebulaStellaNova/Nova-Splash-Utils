@@ -1,0 +1,80 @@
+{
+    "skipNovaSplash": false,
+    "splashes": [
+        {
+            "assetPath": "novaProjects", // Asset path inside of "images/splashscreen"
+            "startAlpha": 0, // Initial aloha of the object.
+            "startPosition": [ // Can be an int or, use "center" to center it on that axes.
+                "center",
+                "center"
+            ],
+            "scale": 0.75,
+            "isPixel": false,
+            "animations": [
+                {
+                    "type": "tween", // Types: tween, pause.
+                    "ease": "sineOut", // Any ease type you desire.
+                    "properties": {
+                        "alpha": 1 // Works the same as FlxTween properties.
+                    },
+                    "duration": 1, // Duration in seconds.
+                    "soundAssets": { // Play sounds when you want
+                        "onStart": null,
+                        "onComplete": null
+                    }
+                },
+                {
+                    "type": "pause",
+                    "duration": 2
+                },
+                {
+                    "type": "tween",
+                    "ease": "linear",
+                    "properties": {
+                        "alpha": 0
+                    },
+                    "duration": 1
+                }
+            ]
+        },
+        {
+            "assetPath": "root:newgrounds_logo", // You can use root to not search the splashscreen folder but instead the base images folder
+            "startAlpha": 0,
+            "startPosition": [
+                "center",
+                "center"
+            ],
+            "scale": 1,
+            "isPixel": false,
+            // "animations": "SplashManager.defaultAnimation" // or just type "default"
+            "animations": [
+                {
+                    "type": "tween",
+                    "properties": {
+                        "alpha": 1 
+                    },
+                    "duration": 0.75, // Duration in seconds.
+                    "soundAssets": { // Play sounds when you want
+                        "onStart": "NGFadeIn"
+                    }
+                },
+                {
+                    "type": "pause",
+                    "duration": 2
+                },
+                {
+                    "type": "tween",
+                    "properties": {
+                        "alpha": 0
+                    },
+                    "duration": 0.75,
+                    "soundAssets": { // Play sounds when you want
+                        "onStart": "NGFadeOut"
+                    }
+                }
+            ]
+        }
+    ]
+}
+
+
